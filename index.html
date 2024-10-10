@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPlayer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        #videoPlayer {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border: none;
+            margin-bottom: 20px;
+        }
+        #searchInput {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #searchButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #searchButton:hover {
+            background-color: #45a049;
+        }
+        #searchResults {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .video-item {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .video-item:hover {
+            transform: scale(1.05);
+        }
+        .video-item img {
+            width: 100%;
+            border-radius: 4px;
+        }
+        .video-item p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CPlayer</h1>
+        <iframe id="videoPlayer" src="https://www.youtube.com/embed/YQHsXMglC9A" allowfullscreen></iframe>
+        <div>
+            <input type="text" id="searchInput" placeholder="Search for videos">
+            <button id="searchButton">Search</button>
+        </div>
+        <div id="searchResults"></div>
+    </div>
+
+    <script>
+        const videoPlayer = document.getElementById('videoPlayer');
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const searchResults = document.getElementById('searchResults');
+
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            if (query) {
+                fetch(`https://invidious.privacyredirect.com/api/v1/search?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => displaySearchResults(data))
+                    .catch(error => console.error('Error:', error));
+            }
+        }
+
+        function displaySearchResults(results) {
+            searchResults.innerHTML = '';
+            results.forEach(video => {
+                const videoElement = document.createElement('div');
+                videoElement.className = 'video-item';
+                videoElement.innerHTML = `
+                    <img src="${video.videoThumbnails[0].url}" alt="${video.title}">
+                    <p>${video.title}</p>
+                    <p>${video.viewCountText}</p>
+                `;
+                videoElement.addEventListener('click', () => loadVideo(video.videoId));
+                searchResults.appendChild(videoElement);
+            });
+        }
+
+        function loadVideo(videoId) {
+            videoPlayer.src = `https://www.youtube.com/embed/${videoId}?feature=oembed`;
+        }
+    </script>
+</body>
+</html>
